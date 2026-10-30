@@ -1,0 +1,36 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Download offline libraries
+        run: |
+          mkdir -p www/lib && cd www/lib
+          B=https://cdnjs.cloudflare.com/ajax/libs
+          curl -fsSLO $B/mammoth/1.6.0/mammoth.browser.min.js
+          curl -fsSLO $B/xlsx/0.18.5/xlsx.full.min.js
+          curl -fsSLO $B/jszip/3.10.1/jszip.min.js
+          curl -fsSLO $B/pdf.js/3.11.174/pdf.min.js
+          curl -fsSLO $B/pdf.js/3.11.174/pdf.worker.min.js
+      - name: Make PDF worker local
+        run: sed -i "s#lib/pdf.worker.min.js#lib/pdf.worker.min.js#" www/index.html
+      - run: npm install
+      - run: npx cap add android
+      - run: npx cap sync android
+      - name: Build debug APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Deskwork-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
