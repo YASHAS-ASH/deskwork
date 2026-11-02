@@ -23,10 +23,12 @@ jobs:
           curl -fsSLO $B/jszip/3.10.1/jszip.min.js
           curl -fsSLO $B/pdf.js/3.11.174/pdf.min.js
           curl -fsSLO $B/pdf.js/3.11.174/pdf.worker.min.js
-      - name: Make PDF worker local
-        run: sed -i "s#lib/pdf.worker.min.js#lib/pdf.worker.min.js#" www/index.html
       - run: npm install
       - run: npx cap add android
+      - name: Add file-opening support
+        run: |
+          cp native/MainActivity.java android/app/src/main/java/com/deskwork/app/MainActivity.java
+          python3 native/patch_manifest.py
       - run: npx cap sync android
       - name: Build debug APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
