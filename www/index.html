@@ -107,11 +107,14 @@ input[type=color].rb{padding:2px;width:32px}
 .tablewrap{overflow-x:auto;border-radius:10px}
 
 /* writer */
-#v-writer{background:var(--canvas);overflow:auto;justify-content:center;padding:26px 16px}
-#paper{background:var(--paper);color:var(--paper-ink);width:min(816px,100%);min-height:1056px;height:fit-content;padding:72px max(24px,8%);box-shadow:0 2px 14px rgba(0,0,0,.18);font-family:var(--doc);font-size:15px;line-height:1.5;outline:0;overflow-wrap:anywhere;flex:none}
-#paper h1{font-size:30px;line-height:1.2;margin:0 0 .4em}
-#paper h2{font-size:21px;margin:1em 0 .3em;color:var(--a-writer)}
-#paper h3{font-size:17px;margin:.9em 0 .3em}
+#v-writer{background:var(--canvas);overflow:auto;justify-content:flex-start;padding:20px 12px;touch-action:pan-x pan-y}
+#paper{background:var(--paper);color:var(--paper-ink);height:fit-content;box-shadow:0 2px 14px rgba(0,0,0,.18);font-family:var(--doc);font-size:calc(15px*var(--z,1));line-height:1.5;outline:0;overflow-wrap:anywhere;flex:none;margin:0 auto}
+#paper[data-mode="mobile"]{width:min(816px,100%);min-height:0;padding:24px 20px}
+#paper[data-mode="mobile"] table{display:block;overflow-x:auto}
+#paper[data-mode="print"]{width:816px;min-height:1056px;padding:72px 80px}
+#paper h1{font-size:2em;line-height:1.2;margin:0 0 .4em}
+#paper h2{font-size:1.4em;margin:1em 0 .3em;color:var(--a-writer)}
+#paper h3{font-size:1.13em;margin:.9em 0 .3em}
 #paper p{margin:0 0 .8em}
 #paper table{border-collapse:collapse;max-width:100%}#paper td,#paper th{border:1px solid var(--line);padding:4px 8px}
 #paper img{max-width:100%}
@@ -168,6 +171,13 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
 #busy{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.28);z-index:55;color:#fff;font-weight:600;font-size:16px}
 #busy span{background:rgba(20,22,28,.9);padding:14px 22px;border-radius:12px}
 #backBtn{padding:0 11px;font-size:20px;line-height:1}
+#zoomctl{position:absolute;right:12px;bottom:12px;display:flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:0 2px 10px rgba(0,0,0,.3);z-index:6;overflow:hidden}
+#zoomctl button{width:44px;height:42px;border:0;background:none;font-size:22px;font-weight:600}
+#zoomctl button:active{background:var(--hover)}
+#zlabel{min-width:52px;text-align:center;font-size:13px;font-weight:600;cursor:pointer}
+#findbar{display:none;gap:6px;align-items:center;padding:6px 10px;border-top:1px solid var(--line)}
+#findbar.on{display:flex}
+#fi{flex:1;min-width:0;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 10px;background:var(--surface)}
 #editBtn{display:none}
 @media (max-width:700px){
   #app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
@@ -180,7 +190,8 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
   .group .gl{display:none}.group{padding:0 6px}#ribbon{min-height:0;padding:4px 8px}.group .row{min-height:36px}
   #statusbar{height:22px;font-size:11px}
   #v-writer{padding:0}
-  #paper{padding:20px 16px;min-height:0;width:100%;box-shadow:none}
+  #paper[data-mode="mobile"]{padding:16px 14px;box-shadow:none}
+  #app:not([data-app="home"]) #openBtn{display:none}
   #v-slides{flex-direction:column-reverse}
   #thumbs{width:auto;flex-direction:row;border-right:0;border-top:1px solid var(--line);overflow-x:auto;overflow-y:hidden;padding:8px}
   .thumb{width:112px;flex:none}.mini{font-size:6px}
@@ -202,10 +213,11 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
       <button class="tbtn" id="backBtn" type="button" aria-label="Back to Home">‹</button>
       <input id="docname" aria-label="Document name" spellcheck="false">
       <label id="search"><input id="q" type="search" placeholder="Search your files" aria-label="Search your files"></label>
-      <button class="tbtn" id="editBtn" type="button" aria-label="Show or hide editing tools">Edit</button>
+      <button class="tbtn" id="saveBtn" type="button">Save</button>
+      <button class="tbtn" id="editBtn" type="button" aria-label="Show or hide editing tools">Tools</button>
       <button class="tbtn" id="openBtn" type="button">Open file</button>
     </header>
-    <div id="ribbonwrap"><div id="tabs" role="tablist"></div><div id="ribbon"></div></div>
+    <div id="ribbonwrap"><div id="tabs" role="tablist"></div><div id="ribbon"></div><div id="findbar"><input id="fi" type="search" placeholder="Find in document" aria-label="Find in document"><button class="rb" type="button" id="fPrev" aria-label="Previous match">↑</button><button class="rb" type="button" id="fNext" aria-label="Next match">↓</button><button class="rb" type="button" id="fClose" aria-label="Close find">✕</button></div></div>
     <main id="stage">
       <section class="view on" id="v-home"></section>
       <section class="view" id="v-writer"><div id="paper" contenteditable="true" spellcheck="true" aria-label="Document body"></div></section>
@@ -220,6 +232,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
       </section>
       <section class="view" id="v-reader"></section>
       <div id="pill" hidden></div>
+      <div id="zoomctl" hidden><button type="button" data-z="-1" aria-label="Zoom out">−</button><span id="zlabel" title="Reset zoom">100%</span><button type="button" data-z="1" aria-label="Zoom in">+</button></div>
     </main>
     <footer id="statusbar"></footer>
   </div>
@@ -228,6 +241,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
 <div id="drop">Drop a file to open it</div>
 <div id="busy" hidden><span>Opening…</span></div>
 <div id="toast" role="status"></div>
+<input type="file" id="picIn" accept="image/*" hidden>
 <input type="file" id="fileInput" hidden multiple accept=".docx,.txt,.md,.html,.htm,.xlsx,.xls,.xlsm,.csv,.ods,.pptx,.pdf,.png,.jpg,.jpeg,.gif,.webp,.svg">
 
 <script>
@@ -284,7 +298,7 @@ function go(v){
 }
 function renderAll(){
   const d=cur[view];
-  $('#docname').style.display=view==='home'?'none':'';$('#backBtn').style.display=view==='home'?'none':'';
+  $('#docname').style.display=view==='home'?'none':'';$('#backBtn').style.display=view==='home'?'none':'';$('#saveBtn').style.display=(view==='writer'||view==='sheets'||view==='slides')?'':'none';$('#zoomctl').hidden=!(view==='writer'||view==='sheets');
   $('#docname').value=d?d.name:'';
   buildTabs();buildRibbon();
   if(view==='home')renderHome();
@@ -305,10 +319,10 @@ function ribbonDef(){
       {n:'History',items:[B('↶','undo',{t:'Undo'}),B('↷','redo',{t:'Redo'})]},
       {n:'Font',items:[{sel:'fontName',opts:['Carlito','Georgia','Courier New','Arial','Times New Roman']},{sel:'fontSize',opts:[['1','8'],['2','10'],['3','12'],['4','14'],['5','18'],['6','24'],['7','36']],def:'3'},B('B','bold',{t:'Bold (Ctrl+B)',tog:1}),B('I','italic',{t:'Italic',tog:1}),B('U','underline',{t:'Underline',tog:1}),B('S̶','strikeThrough',{t:'Strikethrough',tog:1}),{color:'foreColor'},{color:'hiliteColor',v:'#ffe45c'}]},
       {n:'Paragraph',items:[B('• List','insertUnorderedList',{t:'Bullets'}),B('1. List','insertOrderedList',{t:'Numbering'}),B('⇤','justifyLeft',{t:'Align left'}),B('↔','justifyCenter',{t:'Center'}),B('⇥','justifyRight',{t:'Align right'}),B('☰','justifyFull',{t:'Justify'}),B('→|','indent',{t:'Increase indent'}),B('|←','outdent',{t:'Decrease indent'})]},
-      {n:'Styles',items:[{sel:'formatBlock',opts:[['p','Normal'],['h1','Title'],['h2','Heading 1'],['h3','Heading 2'],['blockquote','Quote']]}]}
+      {n:'Styles',items:[{sel:'formatBlock',opts:[['p','Normal'],['h1','Title'],['h2','Heading 1'],['h3','Heading 2'],['blockquote','Quote']]},B('Clear','removeFormat',{t:'Clear formatting'})]},{n:'Find',items:[B('Find','w:find',{big:1,g:'⌕'})]}
     ];
-    const ins=[{n:'Insert',items:[B('Table','w:table',{big:1,g:'▦'}),B('Line','insertHorizontalRule',{big:1,g:'—'}),B('Link','w:link',{big:1,g:'🔗'}),B('Date','w:date',{big:1,g:'📅'})]}];
-    const vw=[{n:'Zoom',items:[B('−','w:zoomout'),B('+','w:zoomin'),B('100%','w:zoom100')]}];
+    const ins=[{n:'Insert',items:[B('Table','w:table',{big:1,g:'▦'}),B('Line','insertHorizontalRule',{big:1,g:'—'}),B('Link','w:link',{big:1,g:'∞'}),B('Date','w:date',{big:1,g:'#'}),B('Picture','w:pic',{big:1,g:'▣'})]}];
+    const vw=[{n:'Views',items:[B('Mobile view','w:mobile',{big:1,g:'M'}),B('Print layout','w:print',{big:1,g:'P'})]},{n:'Zoom',items:[B('Zoom out','w:zoomout',{big:1,g:'−'}),B('Zoom in','w:zoomin',{big:1,g:'+'}),B('100%','w:zoom100',{big:1,g:'1×'}),B('Fit width','w:fit',{big:1,g:'↔'})]}];
     return {tabs:['Home','Insert','View'],groups:tab==='Insert'?ins:tab==='View'?vw:home};
   }
   if(view==='sheets'){
@@ -351,8 +365,8 @@ $('#ribbon').addEventListener('mousedown',e=>{if(e.target.closest('button.rb'))e
 $('#ribbon').addEventListener('click',e=>{const b=e.target.closest('[data-cmd]');if(b)command(b.dataset.cmd)});
 $('#ribbon').addEventListener('change',e=>{
   const s=e.target;
-  if(s.dataset.sel){$('#paper').focus();document.execCommand(s.dataset.sel==='formatBlock'?'formatBlock':s.dataset.sel,false,s.dataset.sel==='formatBlock'?'<'+s.value+'>':s.value);saveWriter()}
-  if(s.dataset.color){$('#paper').focus();document.execCommand(s.dataset.color,false,s.value);saveWriter()}
+  if(s.dataset.sel){focusPaper();document.execCommand(s.dataset.sel==='formatBlock'?'formatBlock':s.dataset.sel,false,s.dataset.sel==='formatBlock'?'<'+s.value+'>':s.value);saveWriter()}
+  if(s.dataset.color){focusPaper();document.execCommand(s.dataset.color,false,s.value);saveWriter()}
   if(s.id==='pageIn')gotoPage(+s.value);
 });
 
@@ -360,11 +374,15 @@ function command(c){
   if(c==='open')return $('#fileInput').click();
   if(c.startsWith('new:'))return newDoc(c.slice(4),false,true);
   if(view==='writer'){
-    if(c==='w:table'){$('#paper').focus();document.execCommand('insertHTML',false,'<table><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table><p><br></p>');return saveWriter()}
-    if(c==='w:date'){$('#paper').focus();document.execCommand('insertText',false,new Date().toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}));return saveWriter()}
-    if(c==='w:link'){const sel=getSelection().toString();const u=sel&&/^(https?:)?\/\//.test(sel)?sel:'https://example.com';$('#paper').focus();document.execCommand('createLink',false,u);return saveWriter()}
-    if(c.startsWith('w:zoom')){const p=$('#paper');let z=+(p.dataset.z||1);z=c==='w:zoomin'?Math.min(1.6,z+.1):c==='w:zoomout'?Math.max(.5,z-.1):1;p.dataset.z=z;p.style.zoom=z;return status()}
-    $('#paper').focus();document.execCommand(c,false,null);saveWriter();syncToggles();return;
+    if(c==='w:table'){focusPaper();document.execCommand('insertHTML',false,'<table><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table><p><br></p>');return saveWriter()}
+    if(c==='w:date'){focusPaper();document.execCommand('insertText',false,new Date().toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}));return saveWriter()}
+    if(c==='w:link'){const sel=getSelection().toString();const u=sel&&/^(https?:)?\/\//.test(sel)?sel:'https://example.com';focusPaper();document.execCommand('createLink',false,u);return saveWriter()}
+    if(c==='w:find'){const f=$('#findbar');f.classList.toggle('on');if(f.classList.contains('on'))$('#fi').focus();return}
+    if(c==='w:pic')return $('#picIn').click();
+    if(c==='w:mobile'||c==='w:print'){wmode=c==='w:mobile'?'mobile':'print';wz=1;return applyWriter()}
+    if(c==='w:zoomin'||c==='w:zoomout'){wz=Math.min(3,Math.max(.5,+(wz*(c==='w:zoomin'?1.15:1/1.15)).toFixed(3)));return applyWriter()}
+    if(c==='w:zoom100'||c==='w:fit'){wz=1;return applyWriter()}
+    focusPaper();document.execCommand(c,false,null);saveWriter();syncToggles();return;
   }
   if(view==='sheets')return sheetCmd(c);
   if(view==='slides')return slideCmd(c);
@@ -379,7 +397,7 @@ document.addEventListener('selectionchange',()=>{if(view==='writer')syncToggles(
 function status(extra){
   const s=$('#statusbar');let l='';
   if(view==='home')l=`<span>${docs.length} file${docs.length===1?'':'s'} open this session</span>`;
-  if(view==='writer'){const t=$('#paper').innerText.trim();const w=t?t.split(/\s+/).length:0;l=`<span>${w} word${w===1?'':'s'}</span><span>${t.length} characters</span><span class="sp">${Math.round(+($('#paper').dataset.z||1)*100)}%</span>`}
+  if(view==='writer'){const t=$('#paper').innerText.trim();const w=t?t.split(/\s+/).length:0;l=`<span>${w} word${w===1?'':'s'}</span><span>${t.length} characters</span><span class="sp">${$('#zlabel').textContent}</span>`}
   if(view==='sheets'){const d=cur.sheets;if(d)l=`<span>${esc(extra||'Ready')}</span><span class="sp">${esc(d.sheets[d.active].name)} · ${d.sheets.length} sheet${d.sheets.length===1?'':'s'}</span>`}
   if(view==='slides'){const d=cur.slides;if(d)l=`<span>Slide ${d.active+1} of ${d.slides.length}</span>`}
   if(view==='reader'){const d=cur.reader;l=d?`<span>${esc(extra||'')}</span><span class="sp">${Math.round((d.zoom||1)*100)}%</span>`:'<span>No file open</span>'}
@@ -461,7 +479,38 @@ async function openFile(f){
 }
 
 /* ---------- writer ---------- */
-function renderWriter(){const d=cur.writer;const p=$('#paper');if(p.dataset.id!=d.id){p.innerHTML=d.html;p.dataset.id=d.id}}
+let wz=1,wmode=innerWidth<=700?'mobile':'print',sz=1,lastRange=null;
+function focusPaper(){const p=$('#paper');p.focus();if(lastRange){const s=getSelection();s.removeAllRanges();s.addRange(lastRange)}}
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&s.anchorNode&&$('#paper').contains(s.anchorNode))lastRange=s.getRangeAt(0).cloneRange()});
+function zoomLabel(){const z=view==='writer'?(wmode==='print'?Math.min(1,($('#v-writer').clientWidth-24)/816)*wz:wz):sz;$('#zlabel').textContent=Math.round(z*100)+'%'}
+function applyWriter(){
+  const p=$('#paper'),host=$('#v-writer');p.dataset.mode=wmode;
+  p.style.setProperty('--z',wmode==='mobile'?wz:1);
+  p.style.zoom=wmode==='print'?Math.min(1,(host.clientWidth-24)/816)*wz:'';
+  zoomLabel();status();
+}
+function applySheetZoom(){const t=$('#gridwrap table');if(t)t.style.zoom=sz;zoomLabel()}
+function pinch(host,get,set){
+  let d0=0,z0=1,raf=0;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  host.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e.touches);z0=get()}},{passive:true});
+  host.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){const z=Math.min(3,Math.max(.5,z0*dist(e.touches)/d0));if(!raf)raf=requestAnimationFrame(()=>{raf=0;set(z)})}},{passive:true});
+  host.addEventListener('touchend',e=>{if(e.touches.length<2)d0=0},{passive:true});
+}
+pinch($('#v-writer'),()=>wz,z=>{wz=z;applyWriter()});
+pinch($('#gridwrap'),()=>sz,z=>{sz=z;applySheetZoom()});
+$('#zoomctl').addEventListener('click',e=>{
+  if(e.target.id==='zlabel'){if(view==='writer'){wz=1;applyWriter()}else{sz=1;applySheetZoom()}return}
+  const b=e.target.closest('[data-z]');if(!b)return;const f=+b.dataset.z>0?1.15:1/1.15;
+  if(view==='writer'){wz=Math.min(3,Math.max(.5,+(wz*f).toFixed(3)));applyWriter()}
+  else if(view==='sheets'){sz=Math.min(3,Math.max(.5,+(sz*f).toFixed(3)));applySheetZoom()}
+});
+addEventListener('resize',()=>{if(view==='writer')applyWriter()});
+function doFind(back){const t=$('#fi').value;if(!t)return;if(!window.find(t,false,back,true,false,false,false))toast('No more matches')}
+$('#fi').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doFind(e.shiftKey)}});
+$('#fNext').addEventListener('click',()=>doFind(false));$('#fPrev').addEventListener('click',()=>doFind(true));
+$('#fClose').addEventListener('click',()=>$('#findbar').classList.remove('on'));
+$('#picIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const r=new FileReader();r.onload=()=>{focusPaper();document.execCommand('insertImage',false,r.result);saveWriter()};r.readAsDataURL(f)});
+function renderWriter(){const d=cur.writer;const p=$('#paper');if(p.dataset.id!=d.id){p.innerHTML=d.html;p.dataset.id=d.id}applyWriter()}
 function saveWriter(){const d=cur.writer;if(d)d.html=$('#paper').innerHTML;status()}
 $('#paper').addEventListener('input',saveWriter);
 
@@ -519,7 +568,7 @@ function renderSheets(){
   $('#gridwrap').innerHTML=h+'</tr></thead><tbody></tbody></table>';
   moreRows(60);
   $('#sheettabs').innerHTML=d.sheets.map((s,i)=>`<button class="stab" role="tab" data-sh="${i}" aria-selected="${i===d.active}" type="button">${esc(s.name)}</button>`).join('');
-  select(d.sel.r,d.sel.c);
+  applySheetZoom();select(d.sel.r,d.sel.c);
 }
 $('#gridwrap').addEventListener('scroll',()=>{const g=$('#gridwrap');if(shRendered<shR&&g.scrollTop+g.clientHeight>g.scrollHeight-900)moreRows(80)},{passive:true});
 function refreshGrid(){
@@ -687,6 +736,30 @@ function readerCmd(c){
   v.addEventListener('touchend',e=>{if(d0&&e.touches.length<2){cur.reader.zoom=Math.min(4,Math.max(.4,z0*live));d0=0;renderReader()}},{passive:true});
 })();
 
+/* ---------- save ---------- */
+const baseName=n=>String(n).replace(/\.[^.]+$/,'');
+async function saveDoc(){
+  const d=cur[view];if(!d)return;
+  let name,mime,b64;
+  if(view==='writer'){
+    saveWriter();
+    const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>'+esc(d.name)+'</title></head><body>'+d.html+'</body></html>';
+    b64=btoa(unescape(encodeURIComponent(html)));name=baseName(d.name)+'.doc';mime='application/msword';
+  }else if(view==='sheets'){
+    await lib('xlsx');const wb=XLSX.utils.book_new();
+    d.sheets.forEach(sh=>{const ws={};let maxC=0;
+      sh.rows.forEach((row,r)=>row.forEach((raw,c)=>{if(raw===''||raw==null)return;const ref=XLSX.utils.encode_cell({r,c});
+        if(String(raw)[0]==='=')ws[ref]={t:'n',f:String(raw).slice(1)};else if(isNum(raw))ws[ref]={t:'n',v:+String(raw).replace(/,/g,'')};else ws[ref]={t:'s',v:String(raw)};maxC=Math.max(maxC,c)}));
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(0,sh.rows.length-1),c:maxC}});
+      XLSX.utils.book_append_sheet(wb,ws,sh.name.slice(0,31)||'Sheet')});
+    b64=XLSX.write(wb,{bookType:'xlsx',type:'base64'});name=baseName(d.name)+'.xlsx';mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  }else{toast('Saving presentations is coming soon.');return}
+  const N=window.DeskworkNative;
+  if(!N||!N.save){toast('Saving works in the installed Deskwork app.');return}
+  const r=N.save(name,mime,b64);toast(r?'Saved to '+r:'Could not save the file.');
+}
+$('#saveBtn').addEventListener('click',saveDoc);
+
 /* ---------- starter files ---------- */
 function seed(){
   addDoc({kind:'reader',name:'Welcome.pdf',type:'none'});docs.shift();cur.reader=null;
@@ -706,6 +779,7 @@ function seed(){
   docs.forEach((d,i)=>d.opened=new Date(Date.now()-i*60000));
   cur.writer=w;cur.sheets=x;
 }
+if(innerWidth<=700)document.body.classList.add('ribbon-open');
 buildRail();renderAll();
 setTimeout(()=>{['xlsx','mammoth','pdf','jszip'].forEach(k=>lib(k).catch(()=>{}))},1200);
 setTimeout(()=>window.__dwIntent(),0);

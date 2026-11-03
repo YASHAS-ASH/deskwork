@@ -125,5 +125,24 @@ public class MainActivity extends BridgeActivity {
       loader = null;
       setIntent(new Intent(Intent.ACTION_MAIN));
     }
+
+    @JavascriptInterface
+    public String save(String fname, String mimeType, String b64) {
+      try {
+        if (android.os.Build.VERSION.SDK_INT < 29) return "";
+        byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
+        android.content.ContentValues v = new android.content.ContentValues();
+        v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fname);
+        v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType);
+        v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Download/Deskwork");
+        Uri u = getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+        if (u == null) return "";
+        java.io.OutputStream o = getContentResolver().openOutputStream(u);
+        try { o.write(bytes); } finally { o.close(); }
+        return "Downloads/Deskwork/" + fname;
+      } catch (Exception e) {
+        return "";
+      }
+    }
   }
 }
