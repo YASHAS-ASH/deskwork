@@ -107,7 +107,7 @@ input[type=color].rb{padding:2px;width:32px}
 /* writer */
 #v-writer{background:var(--canvas);overflow:auto;justify-content:flex-start;padding:20px 12px;touch-action:pan-x pan-y}
 #paper{background:var(--paper);color:var(--paper-ink);height:fit-content;box-shadow:0 2px 14px rgba(0,0,0,.18);font-family:var(--doc);font-size:calc(15px*var(--z,1));line-height:1.5;outline:0;overflow-wrap:anywhere;flex:none;margin:0 auto}
-#paper[data-mode="mobile"]{width:min(816px,100%);min-height:0;padding:24px 20px}
+#paper[data-mode="mobile"]{width:min(816px,100%);min-height:100%;padding:24px 20px}
 #paper[data-mode="mobile"] table{display:block;overflow-x:auto}
 #paper[data-mode="print"]{width:816px;min-height:1056px;padding:72px 80px}
 #paper h1{font-size:1.5em;font-weight:400;line-height:1.2;margin:.8em 0 .3em;color:#2f5496}
@@ -210,6 +210,37 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
   #titlebar{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+#bnav,#newsheet{display:none}
+#bnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 18px;border-radius:8px;color:var(--muted);font-size:11px;font-weight:500}
+#bnav button[aria-current="true"]{color:var(--accent)}
+#bnav svg{width:24px;height:24px}
+#newsheet.on{display:flex;position:fixed;inset:0;z-index:58;background:rgba(0,0,0,.4);align-items:flex-end}
+#newsheet .sheet{width:100%;background:var(--surface);border-radius:16px 16px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px}
+#newsheet h3{margin:0 0 6px;font-size:15px}
+#newsheet button{display:flex;align-items:center;gap:14px;border:0;background:none;padding:10px 6px;font-size:16px;font-weight:500;text-align:left;border-radius:8px}
+#newsheet button:active{background:var(--hover)}
+.rb svg,.rb.big b svg{display:block}
+.tbtn svg{width:18px;height:18px;vertical-align:-4px}
+@media (max-width:700px){
+  #rail{display:none}
+  #app{grid-template-rows:minmax(0,1fr) auto}
+  #bnav{display:flex;order:2;justify-content:space-around;background:var(--rail);border-top:1px solid var(--line);padding:4px 0 calc(4px + env(safe-area-inset-bottom,0px))}
+  #app:not([data-app="home"]) #bnav{display:none}
+  #main{grid-template-rows:auto minmax(0,1fr) auto}
+  #stage{grid-row:2}
+  #ribbonwrap{grid-row:3;border-top:1px solid var(--line);border-bottom:0}
+  #statusbar{display:none}
+  #app[data-app="home"] #titlebar .brand{display:inline}
+  #app[data-app="home"] #search{display:flex;flex:1;width:auto;margin-left:0}
+  #openBtn{display:none!important}
+  .tl{display:none}
+  .tbtn{height:34px;padding:0 10px}
+  #zoomctl{right:8px;bottom:8px}
+  #zoomctl button{height:36px;width:38px;font-size:20px}
+  #zoomctl #modeBtn{width:auto}
+  #zlabel{min-width:46px;font-size:12px}
+}
 </style>
 
 </head><body><div id="app" data-app="home">
@@ -220,8 +251,8 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
       <button class="tbtn" id="backBtn" type="button" aria-label="Back to Home">‹</button>
       <input id="docname" aria-label="Document name" spellcheck="false">
       <label id="search"><input id="q" type="search" placeholder="Search your files" aria-label="Search your files"></label>
-      <button class="tbtn" id="saveBtn" type="button">Save</button>
-      <button class="tbtn" id="editBtn" type="button" aria-label="Show or hide editing tools">Tools</button>
+      <button class="tbtn" id="saveBtn" type="button" aria-label="Save to Downloads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span class="tl"> Save</span></button>
+      <button class="tbtn" id="editBtn" type="button" aria-label="Show or hide editing tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span class="tl"> Edit</span></button>
       <button class="tbtn" id="openBtn" type="button">Open file</button>
     </header>
     <div id="ribbonwrap"><div id="tabs" role="tablist"></div><div id="ribbon"></div><div id="findbar"><input id="fi" type="search" placeholder="Find in document" aria-label="Find in document"><button class="rb" type="button" id="fPrev" aria-label="Previous match">↑</button><button class="rb" type="button" id="fNext" aria-label="Next match">↓</button><button class="rb" type="button" id="fClose" aria-label="Close find">✕</button></div></div>
@@ -243,7 +274,17 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
     </main>
     <footer id="statusbar"></footer>
   </div>
+  <nav id="bnav" aria-label="Main">
+  <button type="button" data-b="home" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Home</button>
+  <button type="button" data-b="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New</button>
+  <button type="button" data-b="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Open</button>
+</nav>
 </div>
+<div id="newsheet"><div class="sheet"><h3>Create new</h3>
+  <button type="button" data-new="writer"><span class="glyph g-writer" style="background:var(--a-writer)">W</span>Document</button>
+  <button type="button" data-new="sheets"><span class="glyph g-sheets" style="background:var(--a-sheets)">S</span>Workbook</button>
+  <button type="button" data-new="slides"><span class="glyph g-slides" style="background:var(--a-slides)">P</span>Presentation</button>
+</div></div>
 <div id="present" aria-label="Slide show"></div>
 <div id="drop">Drop a file to open it</div>
 <div id="busy" hidden><span>Opening…</span></div>
@@ -325,6 +366,40 @@ function renderAll(){
 $('#docname').addEventListener('input',e=>{const d=cur[view];if(d){d.name=e.target.value}});
 
 /* ---------- ribbon ---------- */
+
+const P=d=>'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
+const MG='<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>';
+const ICONC={
+ undo:P('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/>'),
+ redo:P('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/>'),
+ insertUnorderedList:P('<circle cx="5" cy="7" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="17" r="1"/><path d="M10 7h10M10 12h10M10 17h10"/>'),
+ insertOrderedList:P('<path d="M10 7h10M10 12h10M10 17h10"/><path d="M4 6h2v4M4 14h3l-3 4h3"/>'),
+ justifyLeft:P('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
+ justifyCenter:P('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
+ justifyRight:P('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
+ justifyFull:P('<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'),
+ indent:P('<path d="M4 6h16M12 10h8M12 14h8M4 18h16"/><path d="M4 9l3 3-3 3"/>'),
+ outdent:P('<path d="M4 6h16M12 10h8M12 14h8M4 18h16"/><path d="M7 9l-3 3 3 3"/>'),
+ removeFormat:P('<path d="M5 5h14M10 5l-3 14M14 13l6 6M20 13l-6 6"/>'),
+ insertHorizontalRule:P('<path d="M4 12h16"/>'),
+ 'w:zoomout':P(MG+'<path d="M8 11h6"/>'),'w:zoomin':P(MG+'<path d="M8 11h6M11 8v6"/>'),
+ 'w:find':P(MG),
+ 'w:table':P('<rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 10h16M4 15h16M10 5v14M15 5v14"/>'),
+ 'w:pic':P('<rect x="4" y="5" width="16" height="14" rx="1"/><circle cx="9" cy="10" r="1.5"/><path d="M4 17l5-4 4 3 3-2 4 3"/>'),
+ 'w:link':P('<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>'),
+ 'w:date':P('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>'),
+ 'w:mobile':P('<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>'),
+ 'w:print':P('<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>'),
+ 'w:zoom100':P('<path d="M7 8l2-1v10M13 7h4v10h-4z"/>'),
+ 'w:fit':P('<path d="M4 12h16M7 9l-3 3 3 3M17 9l3 3-3 3"/>'),
+ 'r:prev':P('<path d="M15 5l-7 7 7 7"/>'),'r:next':P('<path d="M9 5l7 7-7 7"/>'),
+ 'r:out':P(MG+'<path d="M8 11h6"/>'),'r:in':P(MG+'<path d="M8 11h6M11 8v6"/>'),'r:fit':P('<path d="M4 12h16M7 9l-3 3 3 3M17 9l3 3-3 3"/>'),
+ 'p:add':P('<path d="M12 5v14M5 12h14"/>'),'p:dup':P('<rect x="8" y="8" width="11" height="11" rx="1"/><path d="M5 15V6a1 1 0 011-1h9"/>'),
+ 'p:del':P('<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>'),'p:up':P('<path d="M12 19V5M6 11l6-6 6 6"/>'),'p:down':P('<path d="M12 5v14M6 13l6 6 6-6"/>'),
+ 'p:start':P('<path d="M7 5l12 7-12 7z"/>'),'p:cur':P('<path d="M7 5l12 7-12 7z"/>'),
+ 's:sum':P('<path d="M18 5H7l6 7-6 7h11"/>'),'s:addrow':P('<path d="M12 7v10M7 12h10"/>'),'s:addcol':P('<path d="M12 7v10M7 12h10"/>'),'s:delrow':P('<path d="M7 12h10"/>'),'s:clear':P('<path d="M18 6L6 18M6 6l12 12"/>'),'s:newsheet':P('<path d="M12 5v14M5 12h14"/>'),
+ open:P('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>')
+};
 const B=(label,cmd,o={})=>({label,cmd,...o});
 function ribbonDef(){
   if(view==='home')return {tabs:['Home'],groups:[{n:'File',items:[B('Open','open',{big:1,g:'↥'}),B('New document','new:writer',{big:1,g:'W'}),B('New workbook','new:sheets',{big:1,g:'S'}),B('New slides','new:slides',{big:1,g:'P'})]}]};
@@ -373,7 +448,7 @@ function buildRibbon(){
     if(it.sel)return `<select class="rsel" data-sel="${it.sel}" aria-label="${it.sel}">${it.opts.map(o=>Array.isArray(o)?`<option value="${o[0]}"${it.def===o[0]?' selected':''}>${o[1]}</option>`:`<option>${o}</option>`).join('')}</select>`;
     if(it.color)return `<input class="rb" type="color" data-color="${it.color}" value="${it.v||'#000000'}" aria-label="${it.color==='foreColor'?'Text color':'Highlight color'}">`;
     if(it.page)return `<input class="rsel" id="pageIn" type="number" min="1" value="1" style="width:58px" aria-label="Page number"><span id="pageOf" style="color:var(--muted);padding:0 4px">/ 1</span>`;
-    return `<button class="rb${it.big?' big':''}" type="button" data-cmd="${it.cmd}" ${it.tog?'data-tog="1" aria-pressed="false"':''} title="${esc(it.t||it.label)}">${it.big?`<b>${it.g}</b>${esc(it.label)}`:esc(it.label)}</button>`}).join('')}</div><div class="gl">${g.n}</div></div>`).join('');
+    return `<button class="rb${it.big?' big':''}" type="button" data-cmd="${it.cmd}" ${it.tog?'data-tog="1" aria-pressed="false"':''} title="${esc(it.t||it.label)}">${it.big?`<b>${ICONC[it.cmd]||it.g}</b>${esc(it.label)}`:(ICONC[it.cmd]||esc(it.label))}</button>`}).join('')}</div><div class="gl">${g.n}</div></div>`).join('');
 }
 $('#ribbon').addEventListener('mousedown',e=>{if(e.target.closest('button.rb'))e.preventDefault()});
 $('#ribbon').addEventListener('click',e=>{const b=e.target.closest('[data-cmd]');if(b)command(b.dataset.cmd)});
@@ -442,6 +517,9 @@ $('#v-home').addEventListener('click',e=>{
 });
 $('#q').addEventListener('input',()=>{if(view!=='home')go('home');else renderHome()});
 $('#openBtn').addEventListener('click',()=>$('#fileInput').click());
+$('#bnav').addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(!b)return;if(b.dataset.b==='home')go('home');else if(b.dataset.b==='open')$('#fileInput').click();else $('#newsheet').classList.add('on')});
+$('#newsheet').addEventListener('click',e=>{const n=e.target.closest('[data-new]');if(n){$('#newsheet').classList.remove('on');newDoc(n.dataset.new,false,true)}else if(e.target.id==='newsheet')$('#newsheet').classList.remove('on')});
+$('#paper').addEventListener('focus',()=>{if(innerWidth<=700)document.body.classList.add('ribbon-open')});
 $('#backBtn').addEventListener('click',()=>go('home'));
 $('#editBtn').addEventListener('click',()=>document.body.classList.toggle('ribbon-open'));
 
@@ -842,7 +920,6 @@ function seed(){
   docs.forEach((d,i)=>d.opened=new Date(Date.now()-i*60000));
   cur.writer=w;cur.sheets=x;
 }
-if(innerWidth<=700)document.body.classList.add('ribbon-open');
 buildRail();renderAll();
 setTimeout(()=>{['xlsx','mammoth','pdf','jszip'].forEach(k=>lib(k).catch(()=>{}))},1200);
 setTimeout(()=>window.__dwIntent(),0);
