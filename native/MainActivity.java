@@ -1,6 +1,12 @@
 package com.deskwork.app;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.pdf.PdfRenderer;
+import android.os.ParcelFileDescriptor;
+import java.io.File;
+import java.io.FileOutputStream;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +24,39 @@ public class MainActivity extends BridgeActivity {
   private byte[] data;
   private String name = "file";
   private String mime = "";
+
+  private PdfRenderer pdf;
+  private ParcelFileDescriptor pfd;
+  private int pdfId = -1;
+  private final Object pdfLock = new Object();
+  private final java.util.concurrent.ExecutorService ex = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+  private void closePdf() {
+    try { if (pdf != null) pdf.close(); } catch (Exception e) {}
+    try { if (pfd != null) pfd.close(); } catch (Exception e) {}
+    pdf = null; pfd = null; pdfId = -1;
+  }
+
+  private int openPdf(int id) {
+    synchronized (pdfLock) {
+      try {
+        closePdf();
+        File f = new File(getCacheDir(), "pdf_" + id + ".pdf");
+        pfd = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+        pdf = new PdfRenderer(pfd);
+        pdfId = id;
+        return pdf.getPageCount();
+      } catch (Exception e) {
+        closePdf();
+        return -1;
+      }
+    }
+  }
+
+  private void writeFile(File f, byte[] b) throws Exception {
+    FileOutputStream o = new FileOutputStream(f);
+    try { o.write(b); } finally { o.close(); }
+  }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -143,6 +182,72 @@ public class MainActivity extends BridgeActivity {
       } catch (Exception e) {
         return "";
       }
+    }
+
+    @JavascriptInterface
+    public int pdfFromPending(int id) {
+      Thread t = loader;
+      if (t == null) return -1;
+      try { t.join(); } catch (InterruptedException e) { return -1; }
+      byte[] b;
+      synchronized (lock) { b = data; }
+      if (b == null) return -1;
+      try { writeFile(new File(getCacheDir(), "pdf_" + id + ".pdf"), b); } catch (Exception e) { return -1; }
+      return openPdf(id);
+    }
+
+    @JavascriptInterface
+    public int pdfOpenB64(int id, String b64) {
+      try { writeFile(new File(getCacheDir(), "pdf_" + id + ".pdf"), Base64.decode(b64, Base64.DEFAULT)); } catch (Exception e) { return -1; }
+      return openPdf(id);
+    }
+
+    @JavascriptInterface
+    public int pdfUse(int id) {
+      synchronized (pdfLock) {
+        if (pdfId == id && pdf != null) return pdf.getPageCount();
+      }
+      return openPdf(id);
+    }
+
+    @JavascriptInterface
+    public String pdfSize(int i) {
+      synchronized (pdfLock) {
+        try {
+          PdfRenderer.Page p = pdf.openPage(i);
+          String r = p.getWidth() + "," + p.getHeight();
+          p.close();
+          return r;
+        } catch (Exception e) { return ""; }
+      }
+    }
+
+    @JavascriptInterface
+    public void pdfRender(final int id, final int i, final int width, final int req) {
+      ex.execute(new Runnable() {
+        public void run() {
+          String out = "";
+          synchronized (pdfLock) {
+            try {
+              if (pdf != null && pdfId == id) {
+                PdfRenderer.Page p = pdf.openPage(i);
+                int h = Math.max(1, Math.round(width * (float) p.getHeight() / p.getWidth()));
+                Bitmap bmp = Bitmap.createBitmap(width, h, Bitmap.Config.ARGB_8888);
+                bmp.eraseColor(Color.WHITE);
+                p.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                p.close();
+                ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                bmp.compress(Bitmap.CompressFormat.JPEG, 88, bo);
+                bmp.recycle();
+                out = Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP);
+              }
+            } catch (Exception e) { out = ""; }
+          }
+          final String js = "window.__dwPage&&window.__dwPage(" + req + ",\"" + out + "\")";
+          final WebView wv = getBridge().getWebView();
+          wv.post(new Runnable() { public void run() { wv.evaluateJavascript(js, null); } });
+        }
+      });
     }
   }
 }

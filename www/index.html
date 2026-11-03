@@ -9,12 +9,8 @@
   --accent:#5a4fcf; --accent-ink:#ffffff; --good:#1f7a4d;
   --ui:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --doc:'Carlito',Calibri,'Segoe UI',sans-serif;
-  --a-home:#5a4fcf; --a-writer:#2b5cc4; --a-sheets:#1d7a4a; --a-slides:#c2501d; --a-reader:#b02a37;
+  --a-home:#5a4fcf; --a-writer:#2b579a; --a-sheets:#217346; --a-slides:#b7472a; --a-reader:#202124;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#14171d; --surface:#1c2028; --rail:#191c23; --ink:#e8ebf2; --muted:#9aa3b5; --line:#2e3441;
-  --ribbon:#1f232c; --hover:#2a3040; --paper:#23272f; --paper-ink:#e8ebf2; --canvas:#12141a;
-  --a-home:#8c84f0; --a-writer:#4f84ea; --a-sheets:#34a56f; --a-slides:#e0743d; --a-reader:#e0525f; --good:#4cc38a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#14171d; --surface:#1c2028; --rail:#191c23; --ink:#e8ebf2; --muted:#9aa3b5; --line:#2e3441;
   --ribbon:#1f232c; --hover:#2a3040; --paper:#23272f; --paper-ink:#e8ebf2; --canvas:#12141a;
@@ -42,7 +38,9 @@ button{cursor:pointer}
 .g-home{--c:var(--a-home)}.g-writer{--c:var(--a-writer)}.g-sheets{--c:var(--a-sheets)}.g-slides{--c:var(--a-slides)}.g-reader{--c:var(--a-reader)}
 
 /* main column */
-#main{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;min-width:0;min-height:0}
+#main{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;min-width:0;min-height:0;overflow:hidden}
+#titlebar{grid-row:1}#ribbonwrap{grid-row:2;min-width:0;overflow:hidden}#stage{grid-row:3}#statusbar{grid-row:4}
+html,body{overflow:hidden;overscroll-behavior:none}#app{overflow:hidden}
 #titlebar{background:var(--accent);color:#fff;display:flex;align-items:center;gap:14px;padding:env(safe-area-inset-top,0px) 14px 0;height:calc(46px + env(safe-area-inset-top,0px))}
 #titlebar .brand{font-weight:700;letter-spacing:.2px;white-space:nowrap}
 #docname{background:transparent;border:1px solid transparent;border-radius:5px;padding:4px 8px;color:#fff;min-width:0;width:min(34ch,36vw);font-weight:500}
@@ -112,11 +110,13 @@ input[type=color].rb{padding:2px;width:32px}
 #paper[data-mode="mobile"]{width:min(816px,100%);min-height:0;padding:24px 20px}
 #paper[data-mode="mobile"] table{display:block;overflow-x:auto}
 #paper[data-mode="print"]{width:816px;min-height:1056px;padding:72px 80px}
-#paper h1{font-size:2em;line-height:1.2;margin:0 0 .4em}
-#paper h2{font-size:1.4em;margin:1em 0 .3em;color:var(--a-writer)}
-#paper h3{font-size:1.13em;margin:.9em 0 .3em}
-#paper p{margin:0 0 .8em}
-#paper table{border-collapse:collapse;max-width:100%}#paper td,#paper th{border:1px solid var(--line);padding:4px 8px}
+#paper h1{font-size:1.5em;font-weight:400;line-height:1.2;margin:.8em 0 .3em;color:#2f5496}
+#paper h1.dwtitle{font-size:2.3em;color:#1b1b1b;margin:0 0 .3em}
+#paper .dwsub{color:#5a5a5a;font-size:1.15em;letter-spacing:.4px}
+#paper h2{font-size:1.25em;font-weight:400;margin:.9em 0 .3em;color:#2f5496}
+#paper h3{font-size:1.1em;font-weight:400;margin:.8em 0 .3em;color:#1f3763}
+#paper p{margin:0 0 .6em}
+#paper table{border-collapse:collapse;max-width:100%}#paper td,#paper th{border:1px solid #a6a6a6;padding:4px 8px}
 #paper img{max-width:100%}
 
 /* sheets */
@@ -164,7 +164,14 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
 
 [hidden]{display:none!important}
 #v-reader{background:#525659;position:relative}
-#app[data-app="reader"]{--accent:#2f3237}
+#app[data-app="reader"]{--accent:#202124;grid-template-columns:minmax(0,1fr)}
+#app[data-app="reader"] #rail,#app[data-app="reader"] #statusbar,#app[data-app="reader"] #ribbonwrap{display:none}
+#app[data-app="reader"] #main{grid-template-rows:auto minmax(0,1fr)}
+#app[data-app="reader"] #stage{grid-row:2}
+#docxHost{display:none;margin:0 auto;width:max-content;min-width:100%;flex:none}
+#docxHost .docx-wrapper{background:transparent!important;padding:8px 0!important}
+#docxHost section.docx{box-shadow:0 1px 8px rgba(0,0,0,.3)!important;margin-bottom:10px!important}
+#modeBtn{width:auto!important;padding:0 12px;font-size:12px!important;border-right:1px solid var(--line)!important}
 .pgbox{background:#fff;flex:none;margin:0 auto;box-shadow:0 1px 8px rgba(0,0,0,.45);position:relative}
 .pgbox canvas{display:block}
 #pill{position:absolute;left:12px;bottom:12px;background:rgba(32,33,36,.92);color:#fff;border-radius:16px;padding:5px 12px;font-size:13px;font-weight:600;z-index:5;pointer-events:none}
@@ -220,7 +227,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
     <div id="ribbonwrap"><div id="tabs" role="tablist"></div><div id="ribbon"></div><div id="findbar"><input id="fi" type="search" placeholder="Find in document" aria-label="Find in document"><button class="rb" type="button" id="fPrev" aria-label="Previous match">↑</button><button class="rb" type="button" id="fNext" aria-label="Next match">↓</button><button class="rb" type="button" id="fClose" aria-label="Close find">✕</button></div></div>
     <main id="stage">
       <section class="view on" id="v-home"></section>
-      <section class="view" id="v-writer"><div id="paper" contenteditable="true" spellcheck="true" aria-label="Document body"></div></section>
+      <section class="view" id="v-writer"><div id="paper" contenteditable="true" spellcheck="true" aria-label="Document body"></div><div id="docxHost"></div></section>
       <section class="view" id="v-sheets">
         <div id="fbar"><input id="namebox" readonly aria-label="Cell reference"><span class="fx">fx</span><input id="fx" aria-label="Formula bar" autocomplete="off"></div>
         <div id="gridwrap" tabindex="0"></div>
@@ -232,7 +239,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
       </section>
       <section class="view" id="v-reader"></section>
       <div id="pill" hidden></div>
-      <div id="zoomctl" hidden><button type="button" data-z="-1" aria-label="Zoom out">−</button><span id="zlabel" title="Reset zoom">100%</span><button type="button" data-z="1" aria-label="Zoom in">+</button></div>
+      <div id="zoomctl" hidden><button type="button" id="modeBtn" aria-label="Switch between phone view and page view">Page view</button><button type="button" data-z="-1" aria-label="Zoom out">−</button><span id="zlabel" title="Reset zoom">100%</span><button type="button" data-z="1" aria-label="Zoom in">+</button></div>
     </main>
     <footer id="statusbar"></footer>
   </div>
@@ -249,12 +256,12 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
 'use strict';
 
 const libUsed={},libP={};
-const LIBS={mammoth:'mammoth/1.6.0/mammoth.browser.min.js',xlsx:'xlsx/0.18.5/xlsx.full.min.js',jszip:'jszip/3.10.1/jszip.min.js',pdf:'pdf.js/3.11.174/pdf.min.js'};
+const LIBS={mammoth:'mammoth/1.6.0/mammoth.browser.min.js',xlsx:'xlsx/0.18.5/xlsx.full.min.js',jszip:'jszip/3.10.1/jszip.min.js',pdf:'pdf.js/3.11.174/pdf.min.js',docxprev:'https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js'};
 function loadScript(src){return new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=()=>res(src);e.onerror=()=>{e.remove();rej(new Error(src))};document.head.appendChild(e)})}
 function lib(k){
   if(libP[k])return libP[k];
-  const file=LIBS[k].split('/').pop();
-  return libP[k]=loadScript('lib/'+file).catch(()=>loadScript('https://cdnjs.cloudflare.com/ajax/libs/'+LIBS[k])).then(src=>{libUsed[k]=src});
+  const url=/^https?:/.test(LIBS[k])?LIBS[k]:'https://cdnjs.cloudflare.com/ajax/libs/'+LIBS[k],file=url.split('/').pop();
+  return libP[k]=loadScript('lib/'+file).catch(()=>loadScript(url)).then(src=>{libUsed[k]=src});
 }
 const busy=on=>{$('#busy').hidden=!on};
 const MIMEEXT={'application/pdf':'pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'docx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'xlsx','application/vnd.openxmlformats-officedocument.presentationml.presentation':'pptx','application/msword':'doc','application/vnd.ms-excel':'xls','text/csv':'csv','text/plain':'txt'};
@@ -264,7 +271,14 @@ window.__dwIntent=async function(){
   if(!info)return;
   busy(true);
   try{
-    const m=JSON.parse(info),CH=786432,out=new Uint8Array(m.size);
+    const m=JSON.parse(info);
+    if((/\.pdf$/i.test(m.name||'')||m.mime==='application/pdf')&&N.pdfFromPending){
+      const nm=m.name||'file.pdf',d=addDoc({kind:'reader',name:/\.pdf$/i.test(nm)?nm:nm+'.pdf',type:'pdfn',zoom:1});
+      const n=N.pdfFromPending(d.id);
+      if(n>0){N.done();const z=(N.pdfSize(0)||'612,792').split(',');d.w=+z[0];d.h=+z[1];d.pages=n;cur.reader=d;go('reader');busy(false);return}
+      docs.splice(docs.indexOf(d),1);cur.reader=null;
+    }
+    const CH=786432,out=new Uint8Array(m.size);
     for(let o=0;o<m.size;o+=CH){const b=atob(N.chunk(o,Math.min(CH,m.size-o)));for(let i=0;i<b.length;i++)out[o+i]=b.charCodeAt(i)}
     N.done();
     let name=m.name||'file';if(!/\.[a-z0-9]{2,5}$/i.test(name)&&MIMEEXT[m.mime])name+='.'+MIMEEXT[m.mime];
@@ -298,7 +312,7 @@ function go(v){
 }
 function renderAll(){
   const d=cur[view];
-  $('#docname').style.display=view==='home'?'none':'';$('#backBtn').style.display=view==='home'?'none':'';$('#saveBtn').style.display=(view==='writer'||view==='sheets'||view==='slides')?'':'none';$('#zoomctl').hidden=!(view==='writer'||view==='sheets');
+  $('#docname').style.display=view==='home'?'none':'';$('#backBtn').style.display=view==='home'?'none':'';$('#saveBtn').style.display=(view==='writer'||view==='sheets'||view==='slides')?'':'none';$('#zoomctl').hidden=!(view==='writer'||view==='sheets'||view==='reader');$('#modeBtn').style.display=view==='writer'?'':'none';$('#docname').readOnly=view==='reader';
   $('#docname').value=d?d.name:'';
   buildTabs();buildRibbon();
   if(view==='home')renderHome();
@@ -374,6 +388,7 @@ function command(c){
   if(c==='open')return $('#fileInput').click();
   if(c.startsWith('new:'))return newDoc(c.slice(4),false,true);
   if(view==='writer'){
+    if(wmode==='print'&&cur.writer.buf&&!['w:mobile','w:print','w:zoomin','w:zoomout','w:zoom100','w:fit','w:find'].includes(c)){toast('Page view is read-only. Switch to Mobile view to edit.');return}
     if(c==='w:table'){focusPaper();document.execCommand('insertHTML',false,'<table><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table><p><br></p>');return saveWriter()}
     if(c==='w:date'){focusPaper();document.execCommand('insertText',false,new Date().toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}));return saveWriter()}
     if(c==='w:link'){const sel=getSelection().toString();const u=sel&&/^(https?:)?\/\//.test(sel)?sel:'https://example.com';focusPaper();document.execCommand('createLink',false,u);return saveWriter()}
@@ -453,7 +468,7 @@ async function openFiles(files){
 }
 async function openFile(f){
   const ext=(f.name.split('.').pop()||'').toLowerCase();
-  if(ext==='docx'){await lib('mammoth');const r=await mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()});return addDoc({kind:'writer',name:f.name,html:r.value||'<p><br></p>'})}
+  if(ext==='docx'){await lib('mammoth');const ab=await f.arrayBuffer();const r=await mammoth.convertToHtml({arrayBuffer:ab.slice(0)},{styleMap:["p[style-name='Title'] => h1.dwtitle:fresh","p[style-name='Subtitle'] => p.dwsub:fresh",'u => u','strike => s']});return addDoc({kind:'writer',name:f.name,html:r.value||'<p><br></p>',buf:ab})}
   if(['txt','md'].includes(ext)){const t=await f.text();return addDoc({kind:'writer',name:f.name,html:t.split(/\n{2,}/).map(p=>'<p>'+esc(p).replace(/\n/g,'<br>')+'</p>').join('')||'<p><br></p>'})}
   if(['html','htm'].includes(ext)){const t=await f.text();const dd=new DOMParser().parseFromString(t,'text/html');dd.querySelectorAll('script,style,iframe,object,embed,link,meta').forEach(n=>n.remove());dd.querySelectorAll('*').forEach(n=>[...n.attributes].forEach(a=>{if(/^on/i.test(a.name)||/^\s*javascript:/i.test(a.value))n.removeAttribute(a.name)}));return addDoc({kind:'writer',name:f.name,html:dd.body.innerHTML})}
   if(['xlsx','xls','xlsm','csv','ods'].includes(ext)){
@@ -473,7 +488,17 @@ async function openFile(f){
       slides.push({title:paras[0]||'',lines:paras.slice(1)})}
     return addDoc({kind:'slides',name:f.name,slides:slides.length?slides:[{title:'',lines:[]}],active:0});
   }
-  if(ext==='pdf')return addDoc({kind:'reader',name:f.name,type:'pdf',buf:await f.arrayBuffer(),zoom:1,page:1,fit:true});
+  if(ext==='pdf'){
+    const NN=NAT();
+    if(NN){
+      const d=addDoc({kind:'reader',name:f.name,type:'pdfn',zoom:1});
+      const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]||'');fr.onerror=rej;fr.readAsDataURL(f)});
+      const n=NN.pdfOpenB64(d.id,b64);
+      if(n>0){const z=(NN.pdfSize(0)||'612,792').split(',');d.w=+z[0];d.h=+z[1];d.pages=n;return d}
+      docs.splice(docs.indexOf(d),1);cur.reader=null;
+    }
+    return addDoc({kind:'reader',name:f.name,type:'pdf',buf:await f.arrayBuffer(),zoom:1,page:1,fit:true});
+  }
   if(['png','jpg','jpeg','gif','webp','svg'].includes(ext))return addDoc({kind:'reader',name:f.name,type:'image',url:URL.createObjectURL(f),zoom:1,page:1});
   toast('.'+ext+' files are not supported yet. Try docx, xlsx, csv, pptx, pdf, txt or an image.');return null;
 }
@@ -482,12 +507,29 @@ async function openFile(f){
 let wz=1,wmode=innerWidth<=700?'mobile':'print',sz=1,lastRange=null;
 function focusPaper(){const p=$('#paper');p.focus();if(lastRange){const s=getSelection();s.removeAllRanges();s.addRange(lastRange)}}
 document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&s.anchorNode&&$('#paper').contains(s.anchorNode))lastRange=s.getRangeAt(0).cloneRange()});
-function zoomLabel(){const z=view==='writer'?(wmode==='print'?Math.min(1,($('#v-writer').clientWidth-24)/816)*wz:wz):sz;$('#zlabel').textContent=Math.round(z*100)+'%'}
+function zoomLabel(){const z=view==='reader'?((cur.reader&&cur.reader.zoom)||1):view==='writer'?(wmode==='print'?Math.min(1,($('#v-writer').clientWidth-24)/816)*wz:wz):sz;$('#zlabel').textContent=Math.round(z*100)+'%'}
 function applyWriter(){
-  const p=$('#paper'),host=$('#v-writer');p.dataset.mode=wmode;
-  p.style.setProperty('--z',wmode==='mobile'?wz:1);
-  p.style.zoom=wmode==='print'?Math.min(1,(host.clientWidth-24)/816)*wz:'';
+  const d=cur.writer,p=$('#paper'),host=$('#v-writer'),dx=$('#docxHost');
+  const usePrint=wmode==='print'&&d&&d.buf;
+  p.style.display=usePrint?'none':'';dx.style.display=usePrint?'block':'none';
+  p.dataset.mode=wmode;p.style.setProperty('--z',wmode==='mobile'?wz:1);
+  if(usePrint){
+    if(dx.dataset.id!=d.id&&!d.printBusy)renderPrint(d);
+    const nat=((dx.querySelector('section.docx')||{}).offsetWidth||794)+16;
+    dx.style.zoom=Math.min(1,(host.clientWidth-8)/nat)*wz;p.style.zoom='';
+  }else{p.style.zoom=wmode==='print'?Math.min(1,(host.clientWidth-24)/816)*wz:''}
+  $('#modeBtn').textContent=wmode==='mobile'?'Page view':'Mobile view';
   zoomLabel();status();
+}
+async function renderPrint(d){
+  d.printBusy=true;busy(true);
+  try{
+    await lib('jszip');await lib('docxprev');const dx=$('#docxHost');dx.innerHTML='';
+    await docx.renderAsync(d.buf.slice(0),dx,dx,{className:'docx',inWrapper:true,breakPages:true,ignoreLastRenderedPageBreak:true});
+    dx.dataset.id=d.id;
+  }catch(e){console.error(e);toast('Page view could not be shown for this file. Showing mobile view.');d.buf=null;wmode='mobile'}
+  d.printBusy=false;busy(false);
+  if(cur.writer===d)applyWriter();
 }
 function applySheetZoom(){const t=$('#gridwrap table');if(t)t.style.zoom=sz;zoomLabel()}
 function pinch(host,get,set){
@@ -499,6 +541,8 @@ function pinch(host,get,set){
 pinch($('#v-writer'),()=>wz,z=>{wz=z;applyWriter()});
 pinch($('#gridwrap'),()=>sz,z=>{sz=z;applySheetZoom()});
 $('#zoomctl').addEventListener('click',e=>{
+  if(e.target.closest('#modeBtn')){wmode=wmode==='mobile'?'print':'mobile';wz=1;applyWriter();return}
+  if(view==='reader'){if(e.target.id==='zlabel')readerCmd('r:fit');else{const b=e.target.closest('[data-z]');if(b)readerCmd(+b.dataset.z>0?'r:in':'r:out')}return}
   if(e.target.id==='zlabel'){if(view==='writer'){wz=1;applyWriter()}else{sz=1;applySheetZoom()}return}
   const b=e.target.closest('[data-z]');if(!b)return;const f=+b.dataset.z>0?1.15:1/1.15;
   if(view==='writer'){wz=Math.min(3,Math.max(.5,+(wz*f).toFixed(3)));applyWriter()}
@@ -675,46 +719,66 @@ addEventListener('keydown',e=>{
 });
 
 /* ---------- reader ---------- */
-let pdfDoc=null,pdfFor=null,io=null;
+let pdfDoc=null,pdfFor=null,io=null,reqN=1;const pendingPg={};
+const NAT=()=>(window.DeskworkNative&&window.DeskworkNative.pdfUse)?window.DeskworkNative:null;
+window.__dwPage=(req,b64)=>{const f=pendingPg[req];delete pendingPg[req];if(f)f(b64)};
 async function renderReader(){
   const d=cur.reader,v=$('#v-reader'),tok=++renderTok;
   $('#pill').hidden=true;if(io){io.disconnect();io=null}
-  if(!d){v.innerHTML=`<div class="empty"><h3 style="color:#fff">Open a PDF or image</h3><p>Drop a file here or choose one from your device.</p><button class="pbtn" type="button" id="rdOpen">Choose a file</button></div>`;status();return}
-  if(d.type==='image'){v.innerHTML=`<img class="pg" alt="${esc(d.name)}" src="${d.url}" style="width:${Math.round(100*(d.zoom||1))}%;height:auto">`;$('#pageOf')&&($('#pageOf').textContent='/ 1');status('Image');return}
+  const keep=(d&&v.dataset.doc==d.id&&v.querySelector('.pgbox')&&v.scrollHeight)?v.scrollTop/v.scrollHeight:0;
+  if(!d){v.innerHTML=`<div class="empty"><h3 style="color:#fff">Open a PDF or image</h3><p style="color:#c8cacd">Choose a file from your device.</p><button class="pbtn" type="button" id="rdOpen">Choose a file</button></div>`;status();return}
+  if(d.type==='image'){v.innerHTML=`<img class="pg" alt="${esc(d.name)}" src="${d.url}" style="width:${Math.round(100*(d.zoom||1))}%;height:auto">`;zoomLabel();return}
   v.innerHTML='<div class="empty"><p style="color:#fff">Opening…</p></div>';
   try{
-    await lib('pdf');
-    pdfjsLib.GlobalWorkerOptions.workerSrc=(libUsed.pdf||'').replace('pdf.min.js','pdf.worker.min.js');
-    if(pdfFor!==d.id){pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(d.buf.slice(0))}).promise;pdfFor=d.id}
-    if(tok!==renderTok)return;
-    const first=await pdfDoc.getPage(1);if(tok!==renderTok)return;
-    const w0=first.getViewport({scale:1}),N=pdfDoc.numPages;
-    const base=Math.min(1.8,Math.max(.3,(v.clientWidth-26)/w0.width)),sc=base*(d.zoom||1);
-    const dpr=Math.min(2,devicePixelRatio||1),W=Math.round(w0.width*sc),H=Math.round(w0.height*sc);
-    v.innerHTML='';const frag=document.createDocumentFragment();
+    const dpr=Math.min(3,devicePixelRatio||1),avail=Math.max(200,v.clientWidth-16),Z=d.zoom||1;
+    let N=0,W=0,H=0,first=null,sc=1,NATV=null;
+    if(d.type==='pdfn'){
+      NATV=NAT();if(!NATV)throw new Error('native missing');
+      N=NATV.pdfUse(d.id);if(N<1)throw new Error('open failed');
+      W=Math.round(avail*Z);H=Math.round(W*d.h/d.w);
+    }else{
+      await lib('pdf');
+      pdfjsLib.GlobalWorkerOptions.workerSrc=(libUsed.pdf||'').replace('pdf.min.js','pdf.worker.min.js');
+      if(pdfFor!==d.id){pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(d.buf.slice(0))}).promise;pdfFor=d.id}
+      if(tok!==renderTok)return;
+      first=await pdfDoc.getPage(1);if(tok!==renderTok)return;
+      const w0=first.getViewport({scale:1});N=pdfDoc.numPages;
+      sc=Math.min(1.8,avail/w0.width)*Z;W=Math.round(w0.width*sc);H=Math.round(w0.height*sc);
+    }
+    v.innerHTML='';v.dataset.doc=d.id;const frag=document.createDocumentFragment();
     for(let n=1;n<=N;n++){const b=document.createElement('div');b.className='pgbox';b.dataset.p=n;b.style.width=W+'px';b.style.height=H+'px';frag.appendChild(b)}
-    v.appendChild(frag);
+    v.appendChild(frag);v.scrollTop=keep*v.scrollHeight;
     let q=Promise.resolve();
-    const draw=n=>{q=q.then(async()=>{
+    const draw=n=>{
       const b=v.querySelector('.pgbox[data-p="'+n+'"]');if(!b||b.dataset.done||tok!==renderTok)return;b.dataset.done='1';
-      const pg=n===1?first:await pdfDoc.getPage(n);if(tok!==renderTok)return;
-      const vp=pg.getViewport({scale:sc}),cv=document.createElement('canvas');
-      cv.width=Math.round(vp.width*dpr);cv.height=Math.round(vp.height*dpr);cv.style.width=vp.width+'px';cv.style.height=vp.height+'px';
-      b.style.width=vp.width+'px';b.style.height=vp.height+'px';b.appendChild(cv);
-      await pg.render({canvasContext:cv.getContext('2d',{alpha:false}),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
-    }).catch(()=>{})};
-    io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)draw(+e.target.dataset.p)}),{root:v,rootMargin:'900px 0px'});
+      if(NATV){
+        const req=reqN++;
+        pendingPg[req]=b64=>{if(tok!==renderTok)return;if(!b64){b.dataset.done='';return}
+          const im=new Image();im.style.cssText='width:100%;height:auto;display:block';
+          im.onload=()=>{b.style.height=Math.round(W*im.naturalHeight/im.naturalWidth)+'px'};
+          im.src='data:image/jpeg;base64,'+b64;b.appendChild(im)};
+        NATV.pdfRender(d.id,n-1,Math.min(2600,Math.round(W*dpr)),req);return;
+      }
+      q=q.then(async()=>{
+        const pg=n===1?first:await pdfDoc.getPage(n);if(tok!==renderTok)return;
+        const vp=pg.getViewport({scale:sc}),cv=document.createElement('canvas');
+        cv.width=Math.round(vp.width*dpr);cv.height=Math.round(vp.height*dpr);cv.style.width=vp.width+'px';cv.style.height=vp.height+'px';
+        b.style.width=vp.width+'px';b.style.height=vp.height+'px';b.appendChild(cv);
+        await pg.render({canvasContext:cv.getContext('2d',{alpha:false}),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
+      }).catch(()=>{});
+    };
+    io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)draw(+e.target.dataset.p)}),{root:v,rootMargin:'1200px 0px'});
     v.querySelectorAll('.pgbox').forEach(b=>io.observe(b));
-    $('#pageIn')&&($('#pageIn').max=N);$('#pageOf')&&($('#pageOf').textContent='/ '+N);
-    updatePill();status(N+' page'+(N===1?'':'s'));
-  }catch(err){console.error(err);if(tok===renderTok)v.innerHTML='<div class="empty"><h3 style="color:#fff">This PDF could not be shown</h3><p>It may be encrypted or damaged.</p></div>'}
+    d.pages=N;$('#pageIn')&&($('#pageIn').max=N);$('#pageOf')&&($('#pageOf').textContent='/ '+N);
+    updatePill();zoomLabel();status(N+' page'+(N===1?'':'s'));
+  }catch(err){console.error(err);if(tok===renderTok)v.innerHTML='<div class="empty"><h3 style="color:#fff">This PDF could not be shown</h3><p style="color:#c8cacd">It may be password protected or damaged.</p></div>'}
 }
 function updatePill(){
-  const v=$('#v-reader'),pill=$('#pill');
-  if(!pdfDoc||!cur.reader||cur.reader.type!=='pdf'||view!=='reader'){pill.hidden=true;return}
+  const v=$('#v-reader'),pill=$('#pill'),d=cur.reader;
+  if(!d||!d.pages||d.type==='image'||view!=='reader'){pill.hidden=true;return}
   const mid=v.scrollTop+v.clientHeight/3;let p=1;
   v.querySelectorAll('.pgbox').forEach(b=>{if(b.offsetTop<=mid)p=+b.dataset.p});
-  pill.textContent=p+' / '+pdfDoc.numPages;pill.hidden=false;
+  pill.textContent=p+' / '+d.pages;pill.hidden=false;
   const i=$('#pageIn');if(i&&document.activeElement!==i)i.value=p;
 }
 $('#v-reader').addEventListener('click',e=>{if(e.target.id==='rdOpen')$('#fileInput').click()});
@@ -722,18 +786,17 @@ $('#v-reader').addEventListener('scroll',updatePill,{passive:true});
 function gotoPage(n){const b=$('#v-reader .pgbox[data-p="'+n+'"]');if(b)$('#v-reader').scrollTo({top:b.offsetTop-8,behavior:'smooth'})}
 function readerCmd(c){
   const d=cur.reader;if(!d)return;
-  if(c==='r:in')d.zoom=Math.min(4,(d.zoom||1)+.25);else if(c==='r:out')d.zoom=Math.max(.4,(d.zoom||1)-.25);
+  if(c==='r:in')d.zoom=Math.min(4,+((d.zoom||1)*1.25).toFixed(3));else if(c==='r:out')d.zoom=Math.max(.5,+((d.zoom||1)/1.25).toFixed(3));
   else if(c==='r:fit')d.zoom=1;
-  else if(c==='r:next'||c==='r:prev'){const i=$('#pageIn');if(i){const n=Math.max(1,Math.min(pdfDoc?pdfDoc.numPages:1,(+i.value||1)+(c==='r:next'?1:-1)));i.value=n;gotoPage(n)}return}
+  else if(c==='r:next'||c==='r:prev'){const i=$('#pageIn');if(i){const n=Math.max(1,Math.min(d.pages||1,(+i.value||1)+(c==='r:next'?1:-1)));i.value=n;gotoPage(n)}return}
   renderReader();
 }
-/* pinch to zoom */
 (function(){
   const v=$('#v-reader');let d0=0,z0=1,live=1;
   const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
   v.addEventListener('touchstart',e=>{if(e.touches.length===2&&cur.reader){d0=dist(e.touches);z0=cur.reader.zoom||1;live=1}},{passive:true});
-  v.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){live=Math.min(4/z0,Math.max(.4/z0,dist(e.touches)/d0));v.querySelectorAll('.pgbox,img.pg').forEach(n=>{n.style.transformOrigin='top left';n.style.transform='scale('+live+')'})}},{passive:true});
-  v.addEventListener('touchend',e=>{if(d0&&e.touches.length<2){cur.reader.zoom=Math.min(4,Math.max(.4,z0*live));d0=0;renderReader()}},{passive:true});
+  v.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){live=Math.min(4/z0,Math.max(.5/z0,dist(e.touches)/d0));v.querySelectorAll('.pgbox,img.pg').forEach(n=>{n.style.transformOrigin='top left';n.style.transform='scale('+live+')'})}},{passive:true});
+  v.addEventListener('touchend',e=>{if(d0&&e.touches.length<2){cur.reader.zoom=Math.min(4,Math.max(.5,z0*live));d0=0;renderReader()}},{passive:true});
 })();
 
 /* ---------- save ---------- */
