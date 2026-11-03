@@ -33,6 +33,9 @@ jobs:
           cp native/MainActivity.java android/app/src/main/java/com/deskwork/app/MainActivity.java
           python3 native/patch_manifest.py
       - run: npx cap sync android
+      - name: Use a fixed signing key so updates install over the old app
+        run: |
+          mkdir -p ~/.android && cp native/debug.keystore ~/.android/debug.keystore
       - name: Build debug APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
