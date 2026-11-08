@@ -38,7 +38,12 @@ jobs:
         run: |
           mkdir -p ~/.android && cp native/debug.keystore ~/.android/debug.keystore
       - name: Build debug APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+        run: |
+          cd android
+          chmod +x gradlew
+          sed -i 's/networkTimeout=10000/networkTimeout=180000/' gradle/wrapper/gradle-wrapper.properties
+          for i in 1 2 3; do ./gradlew assembleDebug && exit 0; echo "Build attempt $i failed, retrying"; sleep 20; done
+          exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: Deskwork-APK
