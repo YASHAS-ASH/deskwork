@@ -31,6 +31,7 @@ jobs:
       - name: Add file-opening support
         run: |
           cp native/MainActivity.java android/app/src/main/java/com/deskwork/app/MainActivity.java
+          cp native/ShareProvider.java android/app/src/main/java/com/deskwork/app/ShareProvider.java
           python3 native/patch_manifest.py
       - run: npx cap sync android
       - name: Use a fixed signing key so updates install over the old app

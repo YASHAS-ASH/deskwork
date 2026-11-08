@@ -249,5 +249,71 @@ public class MainActivity extends BridgeActivity {
         }
       });
     }
+
+    private String safeName(String n) {
+      StringBuilder b = new StringBuilder();
+      for (int i = 0; i < n.length(); i++) {
+        char c = n.charAt(i);
+        b.append("/\\:*?\"<>|".indexOf(c) >= 0 ? '_' : c);
+      }
+      return b.length() == 0 ? "file" : b.toString();
+    }
+
+    private boolean startShare(final File f, String mimeType) {
+      try {
+        Uri uri = androidx.core.content.FileProvider.getUriForFile(MainActivity.this, "com.deskwork.app.share", f);
+        final Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType(mimeType);
+        send.putExtra(Intent.EXTRA_STREAM, uri);
+        send.putExtra(Intent.EXTRA_SUBJECT, f.getName());
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        runOnUiThread(new Runnable() {
+          public void run() {
+            startActivity(Intent.createChooser(send, "Share " + f.getName()));
+          }
+        });
+        return true;
+      } catch (Exception e) {
+        return false;
+      }
+    }
+
+    @JavascriptInterface
+    public boolean share(String fname, String mimeType, String b64) {
+      try {
+        File dir = new File(getCacheDir(), "share");
+        dir.mkdirs();
+        File f = new File(dir, safeName(fname));
+        writeFile(f, Base64.decode(b64, Base64.DEFAULT));
+        return startShare(f, mimeType);
+      } catch (Exception e) {
+        return false;
+      }
+    }
+
+    @JavascriptInterface
+    public boolean sharePdf(int id, String fname) {
+      try {
+        File src = new File(getCacheDir(), "pdf_" + id + ".pdf");
+        File dir = new File(getCacheDir(), "share");
+        dir.mkdirs();
+        String n = safeName(fname);
+        if (!n.toLowerCase().endsWith(".pdf")) n = n + ".pdf";
+        File f = new File(dir, n);
+        java.io.FileInputStream in = new java.io.FileInputStream(src);
+        FileOutputStream out = new FileOutputStream(f);
+        try {
+          byte[] buf = new byte[65536];
+          int r;
+          while ((r = in.read(buf)) > 0) out.write(buf, 0, r);
+        } finally {
+          in.close();
+          out.close();
+        }
+        return startShare(f, "application/pdf");
+      } catch (Exception e) {
+        return false;
+      }
+    }
   }
 }

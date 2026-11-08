@@ -253,6 +253,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-size:13px;table-layout
       <button class="tbtn" id="backBtn" type="button" aria-label="Back to Home">‹</button>
       <input id="docname" aria-label="Document name" spellcheck="false">
       <label id="search"><input id="q" type="search" placeholder="Search your files" aria-label="Search your files"></label>
+      <button class="tbtn" id="shareBtn" type="button" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg><span class="tl"> Share</span></button>
       <button class="tbtn" id="saveBtn" type="button" aria-label="Save to Downloads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span class="tl"> Save</span></button>
       <button class="tbtn" id="editBtn" type="button" aria-label="Show or hide editing tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg><span class="tl"> Edit</span></button>
       <button class="tbtn" id="openBtn" type="button">Open file</button>
@@ -355,7 +356,7 @@ function go(v){
 }
 function renderAll(){
   const d=cur[view];
-  $('#docname').style.display=view==='home'?'none':'';$('#backBtn').style.display=view==='home'?'none':'';$('#saveBtn').style.display=(view==='writer'||view==='sheets'||view==='slides')?'':'none';$('#zoomctl').hidden=!(view==='writer'||view==='sheets');$('#modeBtn').style.display=view==='writer'?'':'none';$('#docname').readOnly=view==='reader';
+  $('#docname').style.display=view==='home'?'none':'';$('#backBtn').style.display=view==='home'?'none':'';$('#saveBtn').style.display=(view==='writer'||view==='sheets'||view==='slides')?'':'none';$('#shareBtn').style.display=view==='home'?'none':'';$('#zoomctl').hidden=!(view==='writer'||view==='sheets');$('#modeBtn').style.display=view==='writer'?'':'none';$('#docname').readOnly=view==='reader';
   $('#docname').value=d?d.name:'';
   buildTabs();buildRibbon();
   if(view==='home')renderHome();
@@ -937,29 +938,89 @@ function applyZoomAt(newZ,from,to){
   v.addEventListener('touchcancel',()=>{if(g){const w=$('#pgwrap');if(w){w.style.transform='';w.style.willChange=''}g=null}},{passive:true});
 })();
 
-/* ---------- save ---------- */
+/* ---------- save & share ---------- */
 const baseName=n=>String(n).replace(/\.[^.]+$/,'');
-async function saveDoc(){
-  const d=cur[view];if(!d)return;
-  let name,mime,b64;
-  if(view==='writer'){
-    saveWriter();
-    const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>'+esc(d.name)+'</title></head><body>'+d.html+'</body></html>';
-    b64=btoa(unescape(encodeURIComponent(html)));name=baseName(d.name)+'.doc';mime='application/msword';
-  }else if(view==='sheets'){
+const DOCX='application/vnd.openxmlformats-officedocument.wordprocessingml.document',XLSXM='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const blobB64=bl=>new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]||'');fr.readAsDataURL(bl)});
+const txtB64=t=>btoa(unescape(encodeURIComponent(t)));
+const XE=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const WNS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+async function buildDocx(html){
+  await lib('jszip');
+  const root=document.createElement('div');root.innerHTML=html;
+  const run=r=>r.br?'<w:r><w:br/></w:r>':'<w:r><w:rPr>'+(r.b?'<w:b/>':'')+(r.i?'<w:i/>':'')+(r.u?'<w:u w:val="single"/>':'')+(r.s?'<w:strike/>':'')+'</w:rPr><w:t xml:space="preserve">'+XE(r.t)+'</w:t></w:r>';
+  const runs=(node,f,out)=>node.childNodes.forEach(n=>{
+    if(n.nodeType===3){if(n.nodeValue)out.push({...f,t:n.nodeValue})}
+    else if(n.nodeType===1){const t=n.tagName.toLowerCase();if(t==='br'){out.push({br:1});return}if(t==='img'||t==='script'||t==='style')return;
+      const g={...f};if(t==='b'||t==='strong')g.b=1;if(t==='i'||t==='em')g.i=1;if(t==='u')g.u=1;if(t==='s'||t==='strike'||t==='del')g.s=1;
+      if(n.style&&+n.style.fontWeight>=600)g.b=1;if(n.style&&n.style.fontStyle==='italic')g.i=1;runs(n,g,out)}});
+  const para=(el,style,prefix)=>{const out=[];if(prefix)out.push({t:prefix});runs(el,{},out);return '<w:p>'+(style?'<w:pPr><w:pStyle w:val="'+style+'"/></w:pPr>':'')+out.map(run).join('')+'</w:p>'};
+  const body=parent=>{let x='';parent.childNodes.forEach(n=>{
+    if(n.nodeType===3){if(n.nodeValue.trim()){const w=document.createElement('p');w.textContent=n.nodeValue;x+=para(w)}return}
+    if(n.nodeType!==1)return;const t=n.tagName.toLowerCase();
+    if(t==='h1')x+=para(n,n.classList.contains('dwtitle')?'Title':'Heading1');
+    else if(t==='h2')x+=para(n,'Heading2');else if(t==='h3'||t==='h4')x+=para(n,'Heading3');
+    else if(t==='ul'||t==='ol'){let i=0;[...n.children].forEach(li=>{if(li.tagName.toLowerCase()!=='li')return;i++;x+=para(li,'',t==='ul'?'•  ':i+'.  ')})}
+    else if(t==='table'){const rows=[...n.querySelectorAll('tr')];let cols=1;rows.forEach(r=>cols=Math.max(cols,r.children.length));
+      x+='<w:tbl><w:tblPr><w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(k=>'<w:'+k+' w:val="single" w:sz="4" w:space="0" w:color="A6A6A6"/>').join('')+'</w:tblBorders></w:tblPr><w:tblGrid>'+'<w:gridCol w:w="2000"/>'.repeat(cols)+'</w:tblGrid>'+
+        rows.map(tr=>'<w:tr>'+[...tr.children].map(c=>'<w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/></w:tcPr>'+para(c)+'</w:tc>').join('')+'</w:tr>').join('')+'</w:tbl><w:p/>'}
+    else if(t==='hr')x+='<w:p/>';
+    else if(t==='div'||t==='section')x+=body(n);
+    else x+=para(n)});return x};
+  const sty=(id,name,sz,color,lvl)=>'<w:style w:type="paragraph" w:styleId="'+id+'"><w:name w:val="'+name+'"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr>'+(lvl>=0?'<w:keepNext/><w:spacing w:before="240" w:after="60"/><w:outlineLvl w:val="'+lvl+'"/>':'<w:spacing w:after="120"/>')+'</w:pPr><w:rPr>'+(color?'<w:color w:val="'+color+'"/>':'')+'<w:sz w:val="'+sz+'"/></w:rPr></w:style>';
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const z=new JSZip();
+  z.file('[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
+  z.file('_rels/.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  z.file('word/_rels/document.xml.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+  z.file('word/styles.xml',H+'<w:styles '+WNS+'><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="160" w:line="259" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'+sty('Title','Title',56,'',-1)+sty('Heading1','heading 1',32,'2F5496',0)+sty('Heading2','heading 2',26,'2F5496',1)+sty('Heading3','heading 3',24,'1F3763',2)+'</w:styles>');
+  z.file('word/document.xml',H+'<w:document '+WNS+'><w:body>'+(body(root)||'<w:p/>')+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>');
+  return z.generateAsync({type:'base64',compression:'DEFLATE'});
+}
+async function exportDoc(){
+  const d=cur[view];if(!d)return null;
+  if(view==='writer'){saveWriter();return{name:baseName(d.name)+'.docx',mime:DOCX,b64:await buildDocx(d.html)}}
+  if(view==='sheets'){
     await lib('xlsx');const wb=XLSX.utils.book_new();
     d.sheets.forEach(sh=>{const ws={};let maxC=0;
       sh.rows.forEach((row,r)=>row.forEach((raw,c)=>{if(raw===''||raw==null)return;const ref=XLSX.utils.encode_cell({r,c});
         if(String(raw)[0]==='=')ws[ref]={t:'n',f:String(raw).slice(1)};else if(isNum(raw))ws[ref]={t:'n',v:+String(raw).replace(/,/g,'')};else ws[ref]={t:'s',v:String(raw)};maxC=Math.max(maxC,c)}));
       ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(0,sh.rows.length-1),c:maxC}});
       XLSX.utils.book_append_sheet(wb,ws,sh.name.slice(0,31)||'Sheet')});
-    b64=XLSX.write(wb,{bookType:'xlsx',type:'base64'});name=baseName(d.name)+'.xlsx';mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-  }else{toast('Saving presentations is coming soon.');return}
+    return{name:baseName(d.name)+'.xlsx',mime:XLSXM,b64:XLSX.write(wb,{bookType:'xlsx',type:'base64'})};
+  }
+  if(view==='slides'){const t=d.slides.map((sl,i)=>(i+1)+'. '+sl.title+'\n'+sl.lines.map(l=>'   - '+l).join('\n')).join('\n\n');return{name:baseName(d.name)+'.txt',mime:'text/plain',b64:txtB64(t)}}
+  if(view==='reader'){
+    if(d.type==='pdf')return{name:d.name,mime:'application/pdf',b64:await blobB64(new Blob([d.buf]))};
+    if(d.type==='image'){const bl=await(await fetch(d.url)).blob();return{name:d.name,mime:bl.type||'image/*',b64:await blobB64(bl)}}
+  }
+  return null;
+}
+async function saveDoc(){
+  if(view==='slides'){toast('Saving presentations is coming soon. Use Share to send the text.');return}
   const N=window.DeskworkNative;
   if(!N||!N.save){toast('Saving works in the installed Deskwork app.');return}
-  const r=N.save(name,mime,b64);toast(r?'Saved to '+r:'Could not save the file.');
+  busy(true);
+  try{const x=await exportDoc();if(!x)return;const r=N.save(x.name,x.mime,x.b64);toast(r?'Saved to '+r:'Could not save the file.')}
+  catch(e){console.error(e);toast('Could not save the file.')}
+  finally{busy(false)}
+}
+async function shareDoc(){
+  const d=cur[view];if(!d||view==='home')return;
+  const N=window.DeskworkNative;
+  if(!N||!N.share){toast('Sharing works in the installed Deskwork app.');return}
+  busy(true);
+  try{
+    let ok;
+    if(d.type==='pdfn')ok=N.sharePdf(d.id,d.name);
+    else{const x=await exportDoc();ok=x?N.share(x.name,x.mime,x.b64):false}
+    if(!ok)toast('Could not share the file.');
+  }catch(e){console.error(e);toast('Could not share the file.')}
+  finally{busy(false)}
 }
 $('#saveBtn').addEventListener('click',saveDoc);
+$('#shareBtn').addEventListener('click',shareDoc);
+window.__dwExport=exportDoc;
 
 /* ---------- starter files ---------- */
 function seed(){
